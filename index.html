@@ -26,7 +26,7 @@
 <script>
   // Filled in after the LIFF app is created in LINE Developers.
   const LIFF_ID = "2011949709-wBrlMLAD";
-  const OA_BASIC_ID = ""; // e.g. "@123abcde" — set after the test OA exists
+  const OA_BASIC_ID = "@050tvfyg"; // test OA
 
   const out = document.getElementById("out");
   const actions = document.getElementById("actions");
@@ -68,11 +68,17 @@
         row("เป็นเพื่อนกับ OA แล้ว", "เช็คไม่ได้ (ยังไม่ได้ผูก OA): " + e.message, "warn");
       }
 
-      if (OA_BASIC_ID) {
-        actions.innerHTML = `<button id="chat">เปิดแชท OA</button>`;
-        document.getElementById("chat").onclick = () =>
-          liff.openWindow({ url: `https://line.me/R/ti/p/${encodeURIComponent(OA_BASIC_ID)}`, external: false });
-      }
+      // Real flow (FLOW 7 ③): server links userId + pushes the first message, then we land in the OA chat.
+      // Here: show the results for 2 s, open the OA chat with an empty message box, close the LIFF window.
+      const chatUrl = `https://line.me/R/oaMessage/${encodeURIComponent(OA_BASIC_ID)}/`;
+      const goChat = () => {
+        liff.openWindow({ url: chatUrl, external: false });
+        if (liff.isInClient()) setTimeout(() => liff.closeWindow(), 300);
+      };
+      actions.innerHTML = `<button id="chat">ไปที่แชท OA</button><p class="note" id="auto">จะไปที่แชทอัตโนมัติใน 2 วินาที…</p>`;
+      document.getElementById("chat").onclick = goChat;
+      if (liff.isInClient()) setTimeout(goChat, 2000);
+      else document.getElementById("auto").textContent = "ไม่ได้อยู่ในแอป LINE จึงไม่ไปอัตโนมัติ";
     }).catch((e) => row("liff.init", "ล้มเหลว: " + e.message, "bad"));
   }
 </script>
