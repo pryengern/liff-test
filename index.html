@@ -3,84 +3,84 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LIFF test</title>
+<title>Bussay</title>
 <style>
-  body { margin: 0; padding: 20px 16px; font: 15px/1.6 system-ui, sans-serif; background: #0f0f0f; color: #fff; }
-  h1 { font-size: 18px; margin: 0 0 12px; }
+  body { margin: 0; font: 15px/1.6 system-ui, sans-serif; background: #0f0f0f; color: #fff; }
+  /* Production-like screen: brief loading, then straight to the OA chat. */
+  #loading { min-height: 100vh; display: grid; place-content: center; text-align: center; gap: 14px; padding: 0 24px; }
+  .brand { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+  .spinner { width: 30px; height: 30px; margin: 0 auto; border: 3px solid #2f3036; border-top-color: #fe2c55; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+  #msg { color: #a1a2a7; }
+  /* debug=1 */
+  #debug { padding: 20px 16px; }
   table { width: 100%; border-collapse: collapse; }
   td { padding: 8px 6px; border-bottom: 1px solid #2f3036; vertical-align: top; word-break: break-all; }
   td:first-child { color: #a1a2a7; width: 42%; }
   .ok { color: #34d399; } .bad { color: #f87171; } .warn { color: #fbbf24; }
   button { margin-top: 14px; width: 100%; height: 46px; border: 0; border-radius: 10px; background: #fe2c55; color: #fff; font-size: 15px; font-weight: 600; }
-  button.secondary { background: #2f3036; }
-  p.note { color: #a1a2a7; font-size: 13px; }
+  .hidden { display: none; }
 </style>
 </head>
 <body>
-<h1>ทดสอบ LIFF (เฟส 0)</h1>
-<table id="out"></table>
-<div id="actions"></div>
-<p class="note">หน้านี้ใช้ทดสอบเท่านั้น · ไม่ส่งข้อมูลไปที่ไหน · แสดง userId แค่บางส่วน</p>
+<div id="loading">
+  <div class="brand">Bussay</div>
+  <div class="spinner" aria-hidden="true"></div>
+  <div id="msg">กำลังพาไปคุยกับแอดมิน…</div>
+</div>
+
+<div id="debug" class="hidden">
+  <h1 style="font-size:18px;margin:0 0 12px">ทดสอบ LIFF (debug)</h1>
+  <table id="out"></table>
+  <div id="actions"></div>
+</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-  // Filled in after the LIFF app is created in LINE Developers.
   const LIFF_ID = "2011949709-wBrlMLAD";
   const OA_BASIC_ID = "@050tvfyg"; // test OA
+  const chatUrl = `https://line.me/R/oaMessage/${encodeURIComponent(OA_BASIC_ID)}/`;
 
-  const out = document.getElementById("out");
-  const actions = document.getElementById("actions");
-  const row = (k, v, cls = "") => { out.insertAdjacentHTML("beforeend", `<tr><td>${k}</td><td class="${cls}">${v}</td></tr>`); };
   const mask = (s) => s ? s.slice(0, 5) + "…" + s.slice(-4) : "-";
-  const ua = navigator.userAgent;
-  const inTikTok = /musical_ly|BytedanceWebview|TikTok|trill/i.test(ua);
+  const row = (k, v, cls = "") => document.getElementById("out")
+    .insertAdjacentHTML("beforeend", `<tr><td>${k}</td><td class="${cls}">${v}</td></tr>`);
 
-  row("เวลา", new Date().toLocaleString("th-TH"));
-  row("เปิดจาก browser ของ TikTok", inTikTok ? "ใช่" : "ไม่ใช่", inTikTok ? "warn" : "");
-  row("User agent", ua);
-
-  if (!LIFF_ID) {
-    row("LIFF ID", "ยังไม่ได้ใส่ (ขั้นถัดไป)", "warn");
-  } else {
-    liff.init({ liffId: LIFF_ID }).then(async () => {
-      const params = new URLSearchParams(location.search);
-      row("liff.init", "สำเร็จ", "ok");
-      row("เปิดในแอป LINE (isInClient)", liff.isInClient() ? "ใช่" : "ไม่ใช่ (เปิดใน browser)", liff.isInClient() ? "ok" : "warn");
-      row("OS", liff.getOS());
-      row("LINE version", liff.getLineVersion() || "-");
-      row("ค่า s ที่ได้รับ", params.get("s") || "(ไม่มี)", params.get("s") ? "ok" : "bad");
-      row("login แล้ว", liff.isLoggedIn() ? "ใช่" : "ยัง", liff.isLoggedIn() ? "ok" : "warn");
-
-      if (!liff.isLoggedIn()) {
-        actions.innerHTML = `<button id="login">Login ด้วย LINE</button>`;
-        document.getElementById("login").onclick = () => liff.login({ redirectUri: location.href });
-        return;
-      }
-
-      const token = liff.getDecodedIDToken();
-      row("userId (จาก ID token)", mask(token && token.sub), token && token.sub ? "ok" : "bad");
-      row("มี ID token สำหรับส่งให้ server", liff.getIDToken() ? "มี" : "ไม่มี", liff.getIDToken() ? "ok" : "bad");
-
-      try {
-        const f = await liff.getFriendship();
-        row("เป็นเพื่อนกับ OA แล้ว", f.friendFlag ? "ใช่" : "ยัง", f.friendFlag ? "ok" : "warn");
-      } catch (e) {
-        row("เป็นเพื่อนกับ OA แล้ว", "เช็คไม่ได้ (ยังไม่ได้ผูก OA): " + e.message, "warn");
-      }
-
-      // Real flow (FLOW 7 ③): server links userId + pushes the first message, then we land in the OA chat.
-      // Here: show the results for 2 s, open the OA chat with an empty message box, close the LIFF window.
-      const chatUrl = `https://line.me/R/oaMessage/${encodeURIComponent(OA_BASIC_ID)}/`;
-      const goChat = () => {
-        liff.openWindow({ url: chatUrl, external: false });
-        if (liff.isInClient()) setTimeout(() => liff.closeWindow(), 300);
-      };
-      actions.innerHTML = `<button id="chat">ไปที่แชท OA</button><p class="note" id="auto">จะไปที่แชทอัตโนมัติใน 2 วินาที…</p>`;
-      document.getElementById("chat").onclick = goChat;
-      if (liff.isInClient()) setTimeout(goChat, 2000);
-      else document.getElementById("auto").textContent = "ไม่ได้อยู่ในแอป LINE จึงไม่ไปอัตโนมัติ";
-    }).catch((e) => row("liff.init", "ล้มเหลว: " + e.message, "bad"));
+  function goChat() {
+    liff.openWindow({ url: chatUrl, external: false });
+    if (liff.isInClient()) setTimeout(() => liff.closeWindow(), 150);
   }
+
+  liff.init({ liffId: LIFF_ID }).then(() => {
+    const params = new URLSearchParams(location.search);
+    const debug = params.get("debug") === "1";
+    const token = liff.isLoggedIn() ? liff.getDecodedIDToken() : null;
+
+    if (debug) {
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("debug").classList.remove("hidden");
+      row("เปิดในแอป LINE", liff.isInClient() ? "ใช่" : "ไม่ใช่", liff.isInClient() ? "ok" : "warn");
+      row("OS", liff.getOS());
+      row("ค่า s", params.get("s") || "(ไม่มี)", params.get("s") ? "ok" : "bad");
+      row("userId", mask(token && token.sub), token && token.sub ? "ok" : "bad");
+      document.getElementById("actions").innerHTML = `<button id="chat">ไปที่แชท OA</button>`;
+      document.getElementById("chat").onclick = goChat;
+      return;
+    }
+
+    if (!liff.isInClient()) {
+      // Outside LINE we would need a web login — not used (FLOW 7). Just say so.
+      document.getElementById("msg").textContent = "กรุณาเปิดลิงก์นี้ในแอป LINE";
+      document.querySelector(".spinner").classList.add("hidden");
+      return;
+    }
+
+    // Real system: POST { s, idToken: liff.getIDToken() } to kpi-api here, wait for it, then go to the chat.
+    goChat();
+  }).catch((e) => {
+    document.getElementById("msg").textContent = "เชื่อมต่อไม่สำเร็จ: " + e.message;
+    document.querySelector(".spinner").classList.add("hidden");
+  });
 </script>
 </body>
 </html>
