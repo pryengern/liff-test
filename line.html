@@ -46,7 +46,18 @@
   .privacy { margin-top: 26px; text-align: center; color: var(--muted); font-size: 13px; }
   .privacy a { color: var(--muted); }
   .debug { margin-top: 28px; text-align: center; color: #6e6f75; font-size: 12px; word-break: break-all; }
+
+  /* --- Desktop: QR to continue on the phone (mobile flow from there) --- */
+  #onDesktop { padding-top: 10vh; text-align: center; }
+  #onDesktop h1 { font-size: 24px; margin: 18px 0 6px; }
+  #onDesktop .sub { color: var(--muted); margin: 0 0 22px; }
+  .qr { display: inline-block; padding: 16px; border-radius: 16px; background: #fff; line-height: 0; }
+  .qr svg { width: 240px; height: 240px; }
+  .howto { list-style: none; padding: 0; margin: 24px auto 0; max-width: 360px; text-align: left; display: grid; gap: 10px; }
+  .howto li { display: flex; gap: 12px; align-items: center; color: var(--muted); }
+  .howto .num { width: 28px; height: 28px; font-size: 14px; color: #fff; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -64,6 +75,19 @@
       <li><span class="num">2</span><span>เลือก <span class="pill">เปิดในเบราว์เซอร์</span></span></li>
     </ol>
     <p class="why">แอป TikTok ไม่อนุญาตให้เปิด LINE จากหน้านี้โดยตรง</p>
+  </section>
+
+  <section id="onDesktop" class="hidden" aria-labelledby="t3">
+    <div class="brand">Bussay</div>
+    <h1 id="t3">สแกนเพื่อคุยกับแอดมินใน LINE</h1>
+    <p class="sub">สแกน QR นี้ด้วยแอป LINE บนมือถือ</p>
+    <div class="qr" id="qr" role="img" aria-label="QR code ไปหน้ากรอกอีเมลบนมือถือ"></div>
+    <ol class="howto">
+      <li><span class="num">1</span>สแกน QR ด้านบนนี้</li>
+      <li><span class="num">2</span>กรอกอีเมลในแบบฟอร์ม</li>
+      <li><span class="num">3</span>คุยกับแอดมินใน LINE ได้ทันที</li>
+    </ol>
+    <p class="sub" style="margin-top:14px;font-size:14px">หรือใช้แอปกล้องของมือถือสแกนก็ได้</p>
   </section>
 
   <section id="inBrowser" class="hidden" aria-labelledby="t2">
@@ -89,12 +113,23 @@
   const code = (params.get("r") || "rt2345").toUpperCase();
   const ua = navigator.userAgent;
   const inTikTok = /musical_ly|BytedanceWebview|TikTok|trill/i.test(ua);
+  // iPadOS reports itself as a Mac; a touch screen tells them apart.
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const where = inTikTok ? "อยู่ใน TikTok" : isMobile ? "browser มือถือ" : "desktop";
 
-  document.getElementById("debug").textContent =
-    `ทดสอบ · ผู้ไลฟ์ ${code} · ${inTikTok ? "อยู่ใน TikTok" : "อยู่ใน browser ของเครื่อง"} · ยังไม่บันทึกอีเมลจริง`;
+  document.getElementById("debug").textContent = `ทดสอบ · ผู้ไลฟ์ ${code} · ${where} · ยังไม่บันทึกอีเมลจริง`;
 
   if (inTikTok) {
     document.getElementById("inTiktok").classList.remove("hidden");
+  } else if (!isMobile) {
+    // Desktop: QR back to this same page; the real system adds ?c=<click id> so the scan isn't a new click.
+    document.getElementById("onDesktop").classList.remove("hidden");
+    const target = new URL(location.href);
+    target.searchParams.set("c", "TESTCLICK");
+    const qr = qrcode(0, "M");
+    qr.addData(target.toString());
+    qr.make();
+    document.getElementById("qr").innerHTML = qr.createSvgTag({ cellSize: 6, margin: 0, scalable: true });
   } else {
     document.getElementById("inBrowser").classList.remove("hidden");
   }
