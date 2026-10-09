@@ -3,41 +3,74 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ไปที่ LINE</title>
+<title>ทดสอบเปิด LINE จาก TikTok</title>
 <style>
-  body { margin: 0; padding: 28px 16px; font: 15px/1.6 system-ui, sans-serif; background: #0f0f0f; color: #fff; text-align: center; }
-  a.btn, button { display: block; width: 100%; box-sizing: border-box; margin-top: 14px; height: 48px; line-height: 48px; border: 0; border-radius: 10px; background: #fe2c55; color: #fff; font-size: 15px; font-weight: 600; text-decoration: none; }
-  a.secondary { background: #2f3036; }
-  #fallback { display: none; margin-top: 18px; }
-  p.note { color: #a1a2a7; font-size: 13px; }
+  body { margin: 0; padding: 20px 16px 40px; font: 15px/1.5 system-ui, sans-serif; background: #0f0f0f; color: #fff; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p { margin: 6px 0; }
+  .note { color: #a1a2a7; font-size: 13px; }
+  .group { margin-top: 18px; padding-top: 12px; border-top: 1px solid #2f3036; }
+  a.btn { display: block; margin-top: 10px; padding: 12px 14px; border-radius: 10px; background: #fe2c55; color: #fff; font-weight: 600; text-decoration: none; }
+  a.btn small { display: block; font-weight: 400; color: #ffd1da; font-size: 12px; word-break: break-all; }
+  a.btn.off { background: #2f3036; pointer-events: none; }
+  a.btn.off small { color: #a1a2a7; }
+  input { width: 100%; box-sizing: border-box; height: 44px; margin-top: 6px; padding: 0 12px; border-radius: 10px; border: 1px solid #2f3036; background: #161823; color: #fff; font-size: 15px; }
 </style>
 </head>
 <body>
-<p>จำลองหน้าฟอร์มอีเมลหลังกด submit (ข้อ 7 ①)</p>
-<button id="go">ไปที่ LINE ›</button>
-<div id="fallback">
-  <p>ยังไม่ไป LINE ใช่ไหม</p>
-  <a class="btn secondary" id="again" href="#">เปิด LINE อีกครั้ง</a>
-</div>
+<h1>ทดสอบเปิดแอป LINE จาก TikTok</h1>
 <p class="note" id="info"></p>
+<p class="note">กดทีละปุ่ม แล้วจดว่าปุ่มไหน <b>เปิดแอป LINE</b> ได้ (กลับมาหน้านี้ด้วยปุ่มย้อนกลับ)</p>
+
+<div class="group">
+  <p><b>LIFF</b> (หน้าเว็บของเราในแอป LINE)</p>
+  <a class="btn" id="b1"><span>1 · https://liff.line.me</span><small></small></a>
+  <a class="btn" id="b2"><span>2 · line://app</span><small></small></a>
+  <a class="btn" id="b3"><span>3 · Android intent</span><small></small></a>
+  <a class="btn" id="b4"><span>4 · https://line.me/R/app</span><small></small></a>
+</div>
+
+<div class="group">
+  <p><b>แบบสำรอง</b> (เปิดแชท OA พร้อมข้อความ)</p>
+  <label class="note" for="oa">Bot basic ID ของ OA ทดสอบ (เช่น @123abcde)</label>
+  <input id="oa" placeholder="@xxxxxxxx" autocomplete="off" autocapitalize="off">
+  <a class="btn off" id="b5"><span>5 · https://line.me/R/oaMessage</span><small>ใส่ OA ID ก่อน</small></a>
+  <a class="btn off" id="b6"><span>6 · line://oaMessage</span><small>ใส่ OA ID ก่อน</small></a>
+</div>
 
 <script>
-  // Same value as index.html; filled in after the LIFF app is created.
   const LIFF_ID = "2011949709-wBrlMLAD";
   const s = "TEST" + Math.random().toString(36).slice(2, 6).toUpperCase(); // stands in for the submission code
-  const target = `https://liff.line.me/${LIFF_ID}?s=${s}`;
   const ua = navigator.userAgent;
   document.getElementById("info").textContent =
-    `s=${s} · ${/musical_ly|BytedanceWebview|TikTok|trill/i.test(ua) ? "เปิดจาก TikTok" : "ไม่ได้เปิดจาก TikTok"}`;
-  document.getElementById("again").href = target;
+    `s=${s} · ${/musical_ly|BytedanceWebview|TikTok|trill/i.test(ua) ? "เปิดจาก TikTok" : "ไม่ได้เปิดจาก TikTok"} · ${/Android/i.test(ua) ? "Android" : /iPhone|iPad/i.test(ua) ? "iOS" : "อื่นๆ"}`;
 
-  function go() {
-    if (!LIFF_ID) { alert("ยังไม่ได้ใส่ LIFF ID"); return; }
-    location.href = target;
-    // If LINE did not open within 2.5 s, show the fallback (FLOW 7.1 / 13.7).
-    setTimeout(() => { document.getElementById("fallback").style.display = "block"; }, 2500);
+  function set(id, href) {
+    const a = document.getElementById(id);
+    a.href = href;
+    a.querySelector("small").textContent = href;
+    a.classList.remove("off");
   }
-  document.getElementById("go").onclick = go;
+
+  set("b1", `https://liff.line.me/${LIFF_ID}?s=${s}`);
+  set("b2", `line://app/${LIFF_ID}?s=${s}`);
+  set("b3", `intent://app/${LIFF_ID}?s=${s}#Intent;scheme=line;package=jp.naver.line.android;end`);
+  set("b4", `https://line.me/R/app/${LIFF_ID}?s=${s}`);
+
+  const oaInput = document.getElementById("oa");
+  const saved = new URLSearchParams(location.search).get("oa");
+  if (saved) oaInput.value = saved;
+
+  function updateOa() {
+    let oa = oaInput.value.trim();
+    if (!oa) return;
+    if (!oa.startsWith("@")) oa = "@" + oa;
+    const text = encodeURIComponent(`referal:RT2345 #${s}`);
+    set("b5", `https://line.me/R/oaMessage/${encodeURIComponent(oa)}/?${text}`);
+    set("b6", `line://oaMessage/${encodeURIComponent(oa)}/?${text}`);
+  }
+  oaInput.addEventListener("input", updateOa);
+  updateOa();
 </script>
 </body>
 </html>
