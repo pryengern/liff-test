@@ -82,8 +82,14 @@
     document.getElementById("inBrowser").classList.remove("hidden");
     const open = document.getElementById("open");
     open.href = liffUrl;
-    // Try once automatically; Android may only hand the link to LINE on a real tap, so the button stays.
-    setTimeout(() => { location.href = liffUrl; }, 400);
+    // mode=tap: no auto redirect. Android tends to hand an https link straight to the LINE app only
+    // on a real tap; an automatic redirect may go through LINE's own web hop first. Compare both.
+    if (params.get("mode") === "tap") {
+      document.getElementById("t2").textContent = "กดปุ่มเพื่อไปคุยกับแอดมินใน LINE";
+      document.querySelector("#inBrowser .muted").textContent = "";
+    } else {
+      location.replace(liffUrl);
+    }
   }
 </script>
 </body>
