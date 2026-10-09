@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIFF test</title>
+<style>
+  body { margin: 0; padding: 20px 16px; font: 15px/1.6 system-ui, sans-serif; background: #0f0f0f; color: #fff; }
+  h1 { font-size: 18px; margin: 0 0 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 8px 6px; border-bottom: 1px solid #2f3036; vertical-align: top; word-break: break-all; }
+  td:first-child { color: #a1a2a7; width: 42%; }
+  .ok { color: #34d399; } .bad { color: #f87171; } .warn { color: #fbbf24; }
+  button { margin-top: 14px; width: 100%; height: 46px; border: 0; border-radius: 10px; background: #fe2c55; color: #fff; font-size: 15px; font-weight: 600; }
+  button.secondary { background: #2f3036; }
+  p.note { color: #a1a2a7; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>ทดสอบ LIFF (เฟส 0)</h1>
+<table id="out"></table>
+<div id="actions"></div>
+<p class="note">หน้านี้ใช้ทดสอบเท่านั้น · ไม่ส่งข้อมูลไปที่ไหน · แสดง userId แค่บางส่วน</p>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+  // Filled in after the LIFF app is created in LINE Developers.
+  const LIFF_ID = "";
+  const OA_BASIC_ID = ""; // e.g. "@123abcde" — set after the test OA exists
+
+  const out = document.getElementById("out");
+  const actions = document.getElementById("actions");
+  const row = (k, v, cls = "") => { out.insertAdjacentHTML("beforeend", `<tr><td>${k}</td><td class="${cls}">${v}</td></tr>`); };
+  const mask = (s) => s ? s.slice(0, 5) + "…" + s.slice(-4) : "-";
+  const ua = navigator.userAgent;
+  const inTikTok = /musical_ly|BytedanceWebview|TikTok|trill/i.test(ua);
+
+  row("เวลา", new Date().toLocaleString("th-TH"));
+  row("เปิดจาก browser ของ TikTok", inTikTok ? "ใช่" : "ไม่ใช่", inTikTok ? "warn" : "");
+  row("User agent", ua);
+
+  if (!LIFF_ID) {
+    row("LIFF ID", "ยังไม่ได้ใส่ (ขั้นถัดไป)", "warn");
+  } else {
+    liff.init({ liffId: LIFF_ID }).then(async () => {
+      const params = new URLSearchParams(location.search);
+      row("liff.init", "สำเร็จ", "ok");
+      row("เปิดในแอป LINE (isInClient)", liff.isInClient() ? "ใช่" : "ไม่ใช่ (เปิดใน browser)", liff.isInClient() ? "ok" : "warn");
+      row("OS", liff.getOS());
+      row("LINE version", liff.getLineVersion() || "-");
+      row("ค่า s ที่ได้รับ", params.get("s") || "(ไม่มี)", params.get("s") ? "ok" : "bad");
+      row("login แล้ว", liff.isLoggedIn() ? "ใช่" : "ยัง", liff.isLoggedIn() ? "ok" : "warn");
+
+      if (!liff.isLoggedIn()) {
+        actions.innerHTML = `<button id="login">Login ด้วย LINE</button>`;
+        document.getElementById("login").onclick = () => liff.login({ redirectUri: location.href });
+        return;
+      }
+
+      const token = liff.getDecodedIDToken();
+      row("userId (จาก ID token)", mask(token && token.sub), token && token.sub ? "ok" : "bad");
+      row("มี ID token สำหรับส่งให้ server", liff.getIDToken() ? "มี" : "ไม่มี", liff.getIDToken() ? "ok" : "bad");
+
+      try {
+        const f = await liff.getFriendship();
+        row("เป็นเพื่อนกับ OA แล้ว", f.friendFlag ? "ใช่" : "ยัง", f.friendFlag ? "ok" : "warn");
+      } catch (e) {
+        row("เป็นเพื่อนกับ OA แล้ว", "เช็คไม่ได้ (ยังไม่ได้ผูก OA): " + e.message, "warn");
+      }
+
+      if (OA_BASIC_ID) {
+        actions.innerHTML = `<button id="chat">เปิดแชท OA</button>`;
+        document.getElementById("chat").onclick = () =>
+          liff.openWindow({ url: `https://line.me/R/ti/p/${encodeURIComponent(OA_BASIC_ID)}`, external: false });
+      }
+    }).catch((e) => row("liff.init", "ล้มเหลว: " + e.message, "bad"));
+  }
+</script>
+</body>
+</html>

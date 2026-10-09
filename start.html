@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ไปที่ LINE</title>
+<style>
+  body { margin: 0; padding: 28px 16px; font: 15px/1.6 system-ui, sans-serif; background: #0f0f0f; color: #fff; text-align: center; }
+  a.btn, button { display: block; width: 100%; box-sizing: border-box; margin-top: 14px; height: 48px; line-height: 48px; border: 0; border-radius: 10px; background: #fe2c55; color: #fff; font-size: 15px; font-weight: 600; text-decoration: none; }
+  a.secondary { background: #2f3036; }
+  #fallback { display: none; margin-top: 18px; }
+  p.note { color: #a1a2a7; font-size: 13px; }
+</style>
+</head>
+<body>
+<p>จำลองหน้าฟอร์มอีเมลหลังกด submit (ข้อ 7 ①)</p>
+<button id="go">ไปที่ LINE ›</button>
+<div id="fallback">
+  <p>ยังไม่ไป LINE ใช่ไหม</p>
+  <a class="btn secondary" id="again" href="#">เปิด LINE อีกครั้ง</a>
+</div>
+<p class="note" id="info"></p>
+
+<script>
+  // Same value as index.html; filled in after the LIFF app is created.
+  const LIFF_ID = "";
+  const s = "TEST" + Math.random().toString(36).slice(2, 6).toUpperCase(); // stands in for the submission code
+  const target = `https://liff.line.me/${LIFF_ID}?s=${s}`;
+  const ua = navigator.userAgent;
+  document.getElementById("info").textContent =
+    `s=${s} · ${/musical_ly|BytedanceWebview|TikTok|trill/i.test(ua) ? "เปิดจาก TikTok" : "ไม่ได้เปิดจาก TikTok"}`;
+  document.getElementById("again").href = target;
+
+  function go() {
+    if (!LIFF_ID) { alert("ยังไม่ได้ใส่ LIFF ID"); return; }
+    location.href = target;
+    // If LINE did not open within 2.5 s, show the fallback (FLOW 7.1 / 13.7).
+    setTimeout(() => { document.getElementById("fallback").style.display = "block"; }, 2500);
+  }
+  document.getElementById("go").onclick = go;
+</script>
+</body>
+</html>
