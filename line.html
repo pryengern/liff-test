@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache">
+<title>ไปที่ LINE</title>
+<style>
+  :root { --bg: #0f0f0f; --card: #161823; --line: #2f3036; --fg: #fff; --muted: #a1a2a7; --primary: #fe2c55; --line-green: #06c755; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); }
+  body { font: 16px/1.6 "Noto Sans Thai", system-ui, sans-serif; min-height: 100vh; }
+  .wrap { max-width: 440px; margin: 0 auto; padding: 0 20px 40px; }
+  .hidden { display: none !important; }
+
+  /* --- In TikTok: point at the ⋯ menu in the top-right corner of TikTok's browser bar --- */
+  #inTiktok { padding-top: 8px; }
+  .arrow { position: relative; height: 150px; }
+  .arrow svg { position: absolute; right: -4px; top: 0; width: 170px; height: 150px; }
+  .arrow path { stroke: var(--fg); stroke-width: 5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .bounce { animation: bounce 1.2s ease-in-out infinite; transform-origin: top right; }
+  @keyframes bounce { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(6px, -8px); } }
+  @media (prefers-reduced-motion: reduce) { .bounce { animation: none; } }
+  h1 { font-size: 24px; line-height: 1.35; margin: 4px 0 18px; }
+  .steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .steps li { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+  .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--primary); display: grid; place-items: center; font-weight: 700; }
+  .dots { display: inline-flex; gap: 4px; padding: 6px 10px; border-radius: 8px; background: #fff; vertical-align: middle; margin: 0 4px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: #111; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 8px; background: #fff; color: #111; font-weight: 600; }
+  .why { margin-top: 20px; color: var(--muted); font-size: 14px; }
+
+  /* --- In a normal browser: go to LINE --- */
+  #inBrowser { padding-top: 22vh; text-align: center; }
+  .logo { width: 72px; height: 72px; margin: 0 auto 18px; border-radius: 18px; background: var(--line-green); display: grid; place-items: center; font-weight: 800; font-size: 20px; }
+  .btn { display: block; width: 100%; height: 54px; line-height: 54px; margin-top: 22px; border-radius: 12px; background: var(--line-green); color: #fff; font-size: 17px; font-weight: 700; text-decoration: none; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .debug { margin-top: 28px; color: #6e6f75; font-size: 12px; word-break: break-all; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section id="inTiktok" class="hidden" aria-labelledby="t1">
+    <div class="arrow" aria-hidden="true">
+      <svg viewBox="0 0 170 150" class="bounce">
+        <path d="M20 140 C 40 70, 90 40, 150 18" />
+        <path d="M118 12 L 152 16 L 140 48" />
+      </svg>
+    </div>
+    <h1 id="t1">อีกนิดเดียว ไปคุยกับแอดมินใน LINE</h1>
+    <ol class="steps">
+      <li><span class="num">1</span><span>กดปุ่ม <span class="dots" aria-label="จุดสามจุด"><i></i><i></i><i></i></span> ที่มุมขวาบน</span></li>
+      <li><span class="num">2</span><span>เลือก <span class="pill">เปิดในเบราว์เซอร์</span> แล้ว LINE จะเปิดให้เอง</span></li>
+    </ol>
+    <p class="why">แอป TikTok ไม่อนุญาตให้เปิด LINE จากหน้านี้โดยตรง อีเมลของคุณบันทึกไว้แล้ว</p>
+  </section>
+
+  <section id="inBrowser" class="hidden" aria-labelledby="t2">
+    <div class="logo" aria-hidden="true">LINE</div>
+    <h1 id="t2" style="font-size:22px;margin:0">กำลังเปิด LINE…</h1>
+    <p class="muted">ถ้า LINE ไม่เปิดเอง กดปุ่มด้านล่าง</p>
+    <a class="btn" id="open">เปิด LINE</a>
+  </section>
+
+  <p class="debug" id="debug"></p>
+</div>
+
+<script>
+  const LIFF_ID = "2011949709-wBrlMLAD";
+  const params = new URLSearchParams(location.search);
+  const s = params.get("s") || "TEST" + Math.random().toString(36).slice(2, 6).toUpperCase();
+  const ua = navigator.userAgent;
+  const inTikTok = /musical_ly|BytedanceWebview|TikTok|trill/i.test(ua);
+  const liffUrl = `https://liff.line.me/${LIFF_ID}?s=${encodeURIComponent(s)}`;
+
+  document.getElementById("debug").textContent = `ทดสอบ · s=${s} · ${inTikTok ? "อยู่ใน TikTok" : "อยู่ใน browser ของเครื่อง"}`;
+
+  if (inTikTok) {
+    document.getElementById("inTiktok").classList.remove("hidden");
+  } else {
+    document.getElementById("inBrowser").classList.remove("hidden");
+    const open = document.getElementById("open");
+    open.href = liffUrl;
+    // Try once automatically; Android may only hand the link to LINE on a real tap, so the button stays.
+    setTimeout(() => { location.href = liffUrl; }, 400);
+  }
+</script>
+</body>
+</html>
