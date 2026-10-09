@@ -31,6 +31,13 @@
 </div>
 
 <div class="group">
+  <p><b>ออกจาก browser ของ TikTok</b> (เปิดหน้านี้ใน browser ของเครื่อง)</p>
+  <a class="btn" id="b7"><span>7 · Android: intent → Chrome</span><small></small></a>
+  <a class="btn" id="b8"><span>8 · Android: intent → browser หลักของเครื่อง</span><small></small></a>
+  <a class="btn" id="b9"><span>9 · iPhone: x-safari-https (iOS 17+)</span><small></small></a>
+</div>
+
+<div class="group">
   <p><b>แบบสำรอง</b> (เปิดแชท OA พร้อมข้อความ)</p>
   <label class="note" for="oa">Bot basic ID ของ OA ทดสอบ (เช่น @123abcde)</label>
   <input id="oa" placeholder="@xxxxxxxx" autocomplete="off" autocapitalize="off">
@@ -56,6 +63,14 @@
   set("b2", `line://app/${LIFF_ID}?s=${s}`);
   set("b3", `intent://app/${LIFF_ID}?s=${s}#Intent;scheme=line;package=jp.naver.line.android;end`);
   set("b4", `https://line.me/R/app/${LIFF_ID}?s=${s}`);
+
+  // Re-open this same page outside TikTok; "from" shows on the page which route got us there.
+  const here = "pryengern.github.io/liff-test/start.html";
+  set("b7", `intent://${here}?v=4&from=chrome-intent#Intent;scheme=https;package=com.android.chrome;end`);
+  set("b8", `intent://${here}?v=4&from=browser-intent#Intent;scheme=https;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end`);
+  set("b9", `x-safari-https://${here}?v=4&from=safari`);
+  const from = new URLSearchParams(location.search).get("from");
+  if (from) document.getElementById("info").textContent += ` · เปิดผ่าน: ${from}`;
 
   const oaInput = document.getElementById("oa");
   const saved = new URLSearchParams(location.search).get("oa");
